@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: wiretap
+
+logging:
+  level:
+    io:
+      pivotalservices: DEBUG

@@ -1,0 +1,8 @@
+---
+applications:
+- name: wiretap-route-service
+  memory: 512M
+  instances: 1
+  path: build/libs/pcf-wiretap-route-service.jar
+  services:
+    - rabbit
