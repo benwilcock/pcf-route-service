@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestOperations;
 
 import java.net.URI;
+import java.util.List;
 
 /**
  * The application needs at least one controller in order for the Requests and Responses to be intercepted.
@@ -54,10 +55,26 @@ final class CatchAllController {
 
     @RequestMapping(headers = {FORWARDED_URL, PROXY_METADATA, PROXY_SIGNATURE})
     ResponseEntity<?> service(RequestEntity<byte[]> incoming) {
-        logger.debug("WIRETAP Incoming Request: {}", incoming);
+        printHeaders("INCOMING", incoming.getHeaders());
         RequestEntity<?> outgoing = getOutgoingRequest(incoming);
-        logger.debug("WIRETAP Outgoing Request: {}", outgoing);
+        printHeaders("OUTGOING", incoming.getHeaders());
         return this.restOperations.exchange(outgoing, byte[].class);
+    }
+
+    private static void printHeaders(String type, HttpHeaders headers){
+        StringBuilder sb = new StringBuilder(type + " HEADER ");
+        sb.append(System.lineSeparator());
+
+        for (String key : headers.keySet()) {
+            List<String> values = headers.getValuesAsList(key);
+            sb.append("KEY: " + key + " VALUES: ");
+
+            for (String value : values) {
+                sb.append(value + "; ");
+            }
+            sb.append(System.lineSeparator());
+        }
+        logger.debug(sb.toString());
     }
 
     private static RequestEntity<?> getOutgoingRequest(RequestEntity<?> incoming) {

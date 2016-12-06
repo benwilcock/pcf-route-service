@@ -5,4 +5,4 @@ spring:
 logging:
   level:
     io:
-      pivotalservices: DEBUG
+      pivotalservices: INFO
