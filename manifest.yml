@@ -6,3 +6,5 @@ applications:
   path: build/libs/pcf-wiretap-route-service.jar
   services:
     - rabbit
+  env:
+    JBP_CONFIG_JMX: '{enabled: true}'
