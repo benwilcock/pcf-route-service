@@ -48,6 +48,34 @@ INFO [route-service,cea238f04e523fa7,fd480242bb272149,true] 14 --- [nio-8080-exe
 ```
 
 
+## Extra Credit
+
+This application also demonstrates how to configure JMX so that you can monitor an app while it is running on CloudFoundry.
+
+The process is simple but assumes that your PCF instance allows SSH. Pivotal Web Services and PCF-Dev do allow SSH.
+
+1. Add an environment property to ask the buildpack to make the necessary configuration changes. You can do this via the `cf cli` or by adding the setting to your app's manifest.yml:
+
+````yml
+env:
+    JBP_CONFIG_JMX: '{enabled: true}'
+````
+
+2. Open an SSH tunnel to port 5000 on localhost.
+
+```bash
+cf ssh -N -T -L 5000:localhost:5000 wiretap-route-service
+```
+
+3. Start your monitoring tool. Java comes with Java Mission Control out of the box. You can start mission control with the following command:
+
+```bash
+jmc
+```
+
+4. Add `localhost:5000` to Java Mission Control so that it appears in the list on the left, and then connect to your app's MBeans to start to see the metrics from the server.
+
+
 
 ## License
 The project is released under version 2.0 of the [Apache License][a].
