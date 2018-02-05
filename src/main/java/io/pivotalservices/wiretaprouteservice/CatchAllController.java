@@ -37,11 +37,11 @@ import java.util.List;
 @RestController
 final class CatchAllController {
 
-    static final String FORWARDED_URL = "X-CF-Forwarded-Url";
+    private static final String FORWARDED_URL = "X-CF-Forwarded-Url";
 
-    static final String PROXY_METADATA = "X-CF-Proxy-Metadata";
+    private static final String PROXY_METADATA = "X-CF-Proxy-Metadata";
 
-    static final String PROXY_SIGNATURE = "X-CF-Proxy-Signature";
+    private static final String PROXY_SIGNATURE = "X-CF-Proxy-Signature";
 
     private final static Logger logger = LoggerFactory.getLogger(CatchAllController.class);
 
@@ -54,10 +54,10 @@ final class CatchAllController {
     }
 
     @RequestMapping(headers = {FORWARDED_URL, PROXY_METADATA, PROXY_SIGNATURE})
-    ResponseEntity<?> service(RequestEntity<byte[]> incoming) {
+    ResponseEntity<?> routeService(RequestEntity<byte[]> incoming) {
         printHeaders("INCOMING", incoming.getHeaders());
         RequestEntity<?> outgoing = getOutgoingRequest(incoming);
-        printHeaders("OUTGOING", incoming.getHeaders());
+        printHeaders("OUTGOING", outgoing.getHeaders());
         return this.restOperations.exchange(outgoing, byte[].class);
     }
 

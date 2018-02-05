@@ -1,8 +1,8 @@
 spring:
   application:
-    name: wiretap
+    name: pcf-route-service
 
 logging:
   level:
     io:
-      pivotalservices: INFO
+      pivotalservices: TRACE

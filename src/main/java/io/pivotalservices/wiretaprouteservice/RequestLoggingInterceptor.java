@@ -38,24 +38,21 @@ public class RequestLoggingInterceptor implements ClientHttpRequestInterceptor {
 
 
     private void traceRequest(HttpRequest request, byte[] body) throws IOException {
-        logger.info("REQUEST -> URI: {} METHOD: {} BODY: {}", request.getURI(), request.getMethod(), body);
+        logger.trace("REQUEST -> URI: {} METHOD: {} BODY: {}", request.getURI(), request.getMethod(), new String(body, "UTF-8"));
     }
 
     private void traceResponse(ClientHttpResponse response) throws IOException {
-        String body = getBodyString(response);
-        logger.info("RESPONSE -> S.CODE: {} S.TEXT: {} BODY: {}", response.getStatusCode(), response.getStatusText(), body);
+        logger.trace("RESPONSE -> S.CODE: {} S.TEXT: {} BODY: {}", response.getStatusCode(), response.getStatusText(), getBodyString(response));
     }
 
     private String getBodyString(ClientHttpResponse response) {
         try {
-            //if (response != null && response.getBody() != null && isReadableResponse(response)) {
             if (response != null && response.getBody() != null) {
                 StringBuilder inputStringBuilder = new StringBuilder();
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getBody(), "UTF-8"));
                 String line = bufferedReader.readLine();
                 while (line != null) {
                     inputStringBuilder.append(line);
-                    //inputStringBuilder.append('\n');
                     line = bufferedReader.readLine();
                 }
 

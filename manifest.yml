@@ -1,10 +1,6 @@
 ---
 applications:
-- name: wiretap-route-service
-  memory: 512M
-  instances: 1
-  path: build/libs/pcf-wiretap-route-service.jar
-  services:
-    - rabbit
+- name: edge-router-service
+  path: build/libs/pcf-route-service-0.1.0.jar
   env:
     JBP_CONFIG_JMX: '{enabled: true}'

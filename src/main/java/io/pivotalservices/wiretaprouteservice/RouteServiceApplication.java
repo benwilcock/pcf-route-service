@@ -59,6 +59,7 @@ public class RouteServiceApplication {
         // Add the interceptor that will handle the logging of Requests and Responses
         List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
         interceptors.add(new RequestLoggingInterceptor());
+        interceptors.add(new FakeUserTokenInterceptor());
         restTemplate.setInterceptors(interceptors);
         return restTemplate;
     }
