@@ -22,11 +22,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestOperations;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,7 +46,11 @@ final class CatchAllController {
 
     private static final String PROXY_SIGNATURE = "X-CF-Proxy-Signature";
 
-    private final static Logger logger = LoggerFactory.getLogger(CatchAllController.class);
+    private static final String X_AUTH_USER_HEADER_NAME = "x-auth-user";
+
+    private static final String X_AUTH_TOKEN_HEADER_NAME = "x-auth-token";
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(CatchAllController.class);
 
     private final RestOperations restOperations;
 
@@ -53,38 +60,47 @@ final class CatchAllController {
         this.restOperations = restOperations;
     }
 
+
     @RequestMapping(headers = {FORWARDED_URL, PROXY_METADATA, PROXY_SIGNATURE})
-    ResponseEntity<?> routeService(RequestEntity<byte[]> incoming) {
-        printHeaders("INCOMING", incoming.getHeaders());
+    ResponseEntity<?> service(RequestEntity<byte[]> incoming) {
+        this.LOGGER.info("Incoming Request: {}", incoming);
         RequestEntity<?> outgoing = getOutgoingRequest(incoming);
-        printHeaders("OUTGOING", outgoing.getHeaders());
+        this.LOGGER.info("Outgoing Request: {}", outgoing);
+
         return this.restOperations.exchange(outgoing, byte[].class);
-    }
-
-    private static void printHeaders(String type, HttpHeaders headers){
-        StringBuilder sb = new StringBuilder(type + " HEADER ");
-        sb.append(System.lineSeparator());
-
-        for (String key : headers.keySet()) {
-            List<String> values = headers.getValuesAsList(key);
-            sb.append("KEY: " + key + " VALUES: ");
-
-            for (String value : values) {
-                sb.append(value + "; ");
-            }
-            sb.append(System.lineSeparator());
-        }
-        logger.debug(sb.toString());
     }
 
     private static RequestEntity<?> getOutgoingRequest(RequestEntity<?> incoming) {
         HttpHeaders headers = new HttpHeaders();
         headers.putAll(incoming.getHeaders());
+
+        LOGGER.info("Checking for {} header in the request.", X_AUTH_TOKEN_HEADER_NAME);
+
+        String token = incoming.getHeaders().getFirst(X_AUTH_TOKEN_HEADER_NAME);
+        if (!StringUtils.isEmpty(token)) {
+            LOGGER.info("{} is present, and has a value of: {}", X_AUTH_TOKEN_HEADER_NAME, token);
+            token = getXAuthUserTokenFromRequest(token);
+        }
+
+        List<String> mylist = new ArrayList<>();
+        mylist.add(token);
+        headers.put(X_AUTH_USER_HEADER_NAME, mylist);
+
         URI uri = headers.remove(FORWARDED_URL).stream()
                 .findFirst()
                 .map(URI::create)
                 .orElseThrow(() -> new IllegalStateException(String.format("No %s header present", FORWARDED_URL)));
+
         return new RequestEntity<>(incoming.getBody(), headers, incoming.getMethod(), uri);
+    }
+
+    private static String getXAuthUserTokenFromRequest(String token) {
+        LOGGER.trace("Attempting to getXAuthUserTokenFromRequest({})", token);
+        String[] bits = StringUtils.tokenizeToStringArray(token, ":");
+        LOGGER.trace("Split token into length {} and content: {}", bits.length, StringUtils.arrayToCommaDelimitedString(bits));
+        token = XAuthUserTokenBuilder.getToken(bits[0], bits[1], bits[2]);
+        LOGGER.info("Built {} header with a value of: {}", X_AUTH_USER_HEADER_NAME, token);
+        return token;
     }
 
 }

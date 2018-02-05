@@ -39,36 +39,20 @@ public class RouteServiceApplication {
         SpringApplication.run(RouteServiceApplication.class, args);
     }
 
-    /**
-     * This method configures a RestTemplate that has the necessary 'Interceptor' for logging.
-     * The interceptor being added to the default RestTemplate causes requests and responses to
-     * be logged to the logging framework.
-     * <p>
-     * A custom 'TrustEverythingClientHttpRequestFactory' has been used to allow this service to wiretap all kinds
-     * of different services without security becoming too intrusive.
-     *
-     * @return
-     */
     @Bean
     RestOperations restOperations() {
-
-        // The BufferingClientHttpRequestFactory setup here is critical to reading the response without breaking it!
-        RestTemplate restTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(new TrustEverythingClientHttpRequestFactory()));
+        RestTemplate restTemplate = new RestTemplate(new TrustEverythingClientHttpRequestFactory());
         restTemplate.setErrorHandler(new NoErrorsResponseErrorHandler());
-
-        // Add the interceptor that will handle the logging of Requests and Responses
-        List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
-        interceptors.add(new RequestLoggingInterceptor());
-        interceptors.add(new FakeUserTokenInterceptor());
-        restTemplate.setInterceptors(interceptors);
         return restTemplate;
     }
 
     private static final class NoErrorsResponseErrorHandler extends DefaultResponseErrorHandler {
+
         @Override
         public boolean hasError(ClientHttpResponse response) throws IOException {
             return false;
         }
+
     }
 
     private static final class TrustEverythingClientHttpRequestFactory extends SimpleClientHttpRequestFactory {
@@ -125,5 +109,6 @@ public class RouteServiceApplication {
         }
 
     }
+
 
 }

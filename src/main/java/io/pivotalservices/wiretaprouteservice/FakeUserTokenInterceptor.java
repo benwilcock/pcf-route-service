@@ -41,7 +41,7 @@ public class FakeUserTokenInterceptor implements ClientHttpRequestInterceptor {
 
             LOGGER.info("Attempting to build a new {} header based on the token found ({}).", X_AUTH_USER_HEADER_NAME, token);
             HttpRequestWrapper wrapper = new HttpRequestWrapper(request);
-            token = getXAuthUserTokenFromRequest(token);
+//            token = getXAuthUserTokenFromRequest(token);
 
             LOGGER.info("Adding {} header to the request.", X_AUTH_USER_HEADER_NAME);
             HttpHeaders requestHeaders = wrapper.getHeaders();
@@ -60,12 +60,12 @@ public class FakeUserTokenInterceptor implements ClientHttpRequestInterceptor {
     }
 
 
-    private String getXAuthUserTokenFromRequest(String token) {
-        LOGGER.trace("Attempting to getXAuthUserTokenFromRequest({})", token);
-        String[] bits = StringUtils.tokenizeToStringArray(token, ":");
-        LOGGER.trace("Split token into length {} and content: {}", bits.length, StringUtils.arrayToCommaDelimitedString(bits));
-        token = XAuthUserTokenBuilder.getToken(bits[0], bits[1], bits[2]);
-        LOGGER.info("Built {} header with a value of: {}", X_AUTH_USER_HEADER_NAME, token);
-        return token;
-    }
+//    private String getXAuthUserTokenFromRequest(String token) {
+//        LOGGER.trace("Attempting to getXAuthUserTokenFromRequest({})", token);
+//        String[] bits = StringUtils.tokenizeToStringArray(token, ":");
+//        LOGGER.trace("Split token into length {} and content: {}", bits.length, StringUtils.arrayToCommaDelimitedString(bits));
+//        token = XAuthUserTokenBuilder.getToken(bits[0], bits[1], bits[2]);
+//        LOGGER.info("Built {} header with a value of: {}", X_AUTH_USER_HEADER_NAME, token);
+//        return token;
+//    }
 }
