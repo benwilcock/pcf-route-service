@@ -1,10 +1,8 @@
-package io.pivotalservices.wiretaprouteservice;
+package io.pivotalservices.tokenservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.client.BufferingClientHttpRequestFactory;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.DefaultResponseErrorHandler;
@@ -20,17 +18,11 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
  * This Spring Boot application demonstrates a simple PCF Route Service that implements
- * the 'wiretap' integration pattern. When configured correctly, Requests and Responses
- * can be output as Log entries.
- * <p>
- * Sleuth stream has been added so that log entries contain correlation identifiers and
- * the entries themselves can be analysed as part of a call chain within Zipkin.
+ * the customised user token security strategy.
  */
 @SpringBootApplication
 public class RouteServiceApplication {

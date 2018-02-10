@@ -2,7 +2,11 @@ spring:
   application:
     name: pcf-route-service
 
+management:
+  security:
+    enabled: false
+
 logging:
   level:
-    io:
-      pivotalservices: TRACE
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+    io.pivotalservices: DEBUG

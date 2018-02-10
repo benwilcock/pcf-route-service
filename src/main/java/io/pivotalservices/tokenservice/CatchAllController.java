@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.pivotalservices.wiretaprouteservice;
+package io.pivotalservices.tokenservice;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +30,7 @@ import org.springframework.web.client.RestOperations;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The application needs at least one controller in order for the Requests and Responses to be intercepted.
@@ -62,7 +62,7 @@ final class CatchAllController {
 
 
     @RequestMapping(headers = {FORWARDED_URL, PROXY_METADATA, PROXY_SIGNATURE})
-    ResponseEntity<?> service(RequestEntity<byte[]> incoming) {
+    public ResponseEntity<?> service(RequestEntity<byte[]> incoming) {
         this.LOGGER.info("Incoming Request: {}", incoming);
         RequestEntity<?> outgoing = getOutgoingRequest(incoming);
         this.LOGGER.info("Outgoing Request: {}", outgoing);
@@ -70,21 +70,32 @@ final class CatchAllController {
         return this.restOperations.exchange(outgoing, byte[].class);
     }
 
-    private static RequestEntity<?> getOutgoingRequest(RequestEntity<?> incoming) {
+    protected static RequestEntity<?> getOutgoingRequest(RequestEntity<?> incoming) {
+
+        LOGGER.debug("Making a copy of the headers for the outgoing request.");
         HttpHeaders headers = new HttpHeaders();
         headers.putAll(incoming.getHeaders());
 
-        LOGGER.info("Checking for {} header in the request.", X_AUTH_TOKEN_HEADER_NAME);
+        LOGGER.info("Checking for the presence of the X-Auth-Token header in the request.");
 
         String token = incoming.getHeaders().getFirst(X_AUTH_TOKEN_HEADER_NAME);
         if (!StringUtils.isEmpty(token)) {
-            LOGGER.info("{} is present, and has a value of: {}", X_AUTH_TOKEN_HEADER_NAME, token);
-            token = getXAuthUserTokenFromRequest(token);
+
+            LOGGER.info("Found an X-Auth-Token in the headers ({})", token);
+            LOGGER.info("Generating a new X-Auth-User header from the X-Auth-Token's value");
+            Map<String, String> data = XAuthUserTokenBuilder.splitTokenString(token);
+            token = XAuthUserTokenBuilder.getToken(data);
+            LOGGER.debug("Generated a new X-Auth-User header with a value of {}", token);
+
+            List<String> mylist = new ArrayList<>();
+            mylist.add(token);
+            headers.put(X_AUTH_USER_HEADER_NAME, mylist);
+            LOGGER.info("The new X-Auth-User header has now been added to the request headers");
+
+            headers.remove(X_AUTH_TOKEN_HEADER_NAME);
+            LOGGER.info("Removed the X-Auth-Token header, we don't need it any more.");
         }
 
-        List<String> mylist = new ArrayList<>();
-        mylist.add(token);
-        headers.put(X_AUTH_USER_HEADER_NAME, mylist);
 
         URI uri = headers.remove(FORWARDED_URL).stream()
                 .findFirst()
@@ -93,14 +104,4 @@ final class CatchAllController {
 
         return new RequestEntity<>(incoming.getBody(), headers, incoming.getMethod(), uri);
     }
-
-    private static String getXAuthUserTokenFromRequest(String token) {
-        LOGGER.trace("Attempting to getXAuthUserTokenFromRequest({})", token);
-        String[] bits = StringUtils.tokenizeToStringArray(token, ":");
-        LOGGER.trace("Split token into length {} and content: {}", bits.length, StringUtils.arrayToCommaDelimitedString(bits));
-        token = XAuthUserTokenBuilder.getToken(bits[0], bits[1], bits[2]);
-        LOGGER.info("Built {} header with a value of: {}", X_AUTH_USER_HEADER_NAME, token);
-        return token;
-    }
-
 }
