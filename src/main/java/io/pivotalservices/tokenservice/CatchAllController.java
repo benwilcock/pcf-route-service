@@ -52,12 +52,11 @@ final class CatchAllController {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(CatchAllController.class);
 
-    private final RestOperations restOperations;
-
+    private final PassthruService passthruService;
 
     @Autowired
-    CatchAllController(RestOperations restOperations) {
-        this.restOperations = restOperations;
+    public CatchAllController(PassthruService passthruService) {
+        this.passthruService = passthruService;
     }
 
 
@@ -67,7 +66,7 @@ final class CatchAllController {
         RequestEntity<?> outgoing = getOutgoingRequest(incoming);
         this.LOGGER.info("Outgoing Request: {}", outgoing);
 
-        return this.restOperations.exchange(outgoing, byte[].class);
+        return passthruService.exchange(outgoing);
     }
 
     protected static RequestEntity<?> getOutgoingRequest(RequestEntity<?> incoming) {
