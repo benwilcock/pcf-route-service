@@ -6,6 +6,14 @@ management:
   security:
     enabled: false
 
+security:
+  basic:
+      enabled: false
+  jws:
+    connection-timeout: 60
+    read-timeout: 60
+    url: "https://rcc-edge-router.apps.pcf-t01-we.rabobank.nl/jwk"
+
 logging:
   level:
     org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG

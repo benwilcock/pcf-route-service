@@ -1,19 +1,26 @@
 package io.pivotalservices.tokenservice;
 
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.util.StringUtils;
 
-import java.net.URI;
-import java.net.URL;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +46,16 @@ public class TestCatchAllController {
 
     @MockBean
     private PassthruService passthruService;
+
+    private static JwsParser jwsParser;
+    private JWKSource<SecurityContext> publicKeySet;
+
+
+    @Before
+    public void setup() throws IOException, ParseException {
+        publicKeySet = XAuthUserTokenBuilder.loadPublicKeySet();
+        jwsParser = new JwsParser(new DefaultJWTProcessor<>(), publicKeySet);
+    }
 
 
     @Test
@@ -67,7 +84,7 @@ public class TestCatchAllController {
         assertThat(headers).containsKey("X-CF-Proxy-Metadata");
         assertThat(headers).containsKey("X-CF-Proxy-Signature");
         assertThat(headers).doesNotContainKey("X-CF-Forwarded-Url");
-        assertThat(headers).doesNotContainKey("x-auth-user");
+        assertThat(headers).doesNotContainKey(X_AUTH_USER_HEADER_NAME);
     }
 
     @Test
@@ -75,7 +92,6 @@ public class TestCatchAllController {
 
         ResponseEntity<byte[]> responseEntity = new ResponseEntity<byte[]>("my response body".getBytes(Charset.forName("UTF-8")), new HttpHeaders(), HttpStatus.OK);
         when(passthruService.exchange(any())).thenReturn(responseEntity);
-
 
         this.mockMvc
                 .perform(get("/")
@@ -101,14 +117,18 @@ public class TestCatchAllController {
         assertThat(headers).containsKey("x-auth-user");
         assertThat(headers.get("x-auth-user")).isNotNull();
 
-        Map<String, String> data = new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         data.put(XAuthUserTokenBuilder.AUTH_USER_LEVEL, "3");
         data.put(XAuthUserTokenBuilder.EDO_KLID, "10");
         data.put(XAuthUserTokenBuilder.EDO_USER_ID, "YUMA");
 
-        String token = XAuthUserTokenBuilder.getToken(data);
+        String token = XAuthUserTokenBuilder.generateSignedToken(data);
         assertThat(headers.get("x-auth-user")).isNotNull();
         assertThat(headers.getFirst("x-auth-user")).isEqualTo(token);
+        JWTClaimsSet jwtClaimsSet = jwsParser.parse(token);
+        assertThat(jwtClaimsSet.getClaim("authUserLevel")).isEqualTo(data.get(XAuthUserTokenBuilder.AUTH_USER_LEVEL));
+        assertThat(jwtClaimsSet.getClaim("edoUserId")).isEqualTo(data.get(XAuthUserTokenBuilder.EDO_USER_ID));
+        assertThat(jwtClaimsSet.getClaim("edoKlid")).isEqualTo(data.get(XAuthUserTokenBuilder.EDO_KLID));
     }
 
 }

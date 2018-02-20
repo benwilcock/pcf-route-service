@@ -25,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestOperations;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -82,8 +81,9 @@ final class CatchAllController {
 
             LOGGER.info("Found an X-Auth-Token in the headers ({})", token);
             LOGGER.info("Generating a new X-Auth-User header from the X-Auth-Token's value");
-            Map<String, String> data = XAuthUserTokenBuilder.splitTokenString(token);
-            token = XAuthUserTokenBuilder.getToken(data);
+            Map<String, Object> data = XAuthUserTokenBuilder.buildTokenDataMapFromString(token);
+//            token = XAuthUserTokenBuilder.oldGetToken(data);
+            token = XAuthUserTokenBuilder.generateSignedToken(data);
             LOGGER.debug("Generated a new X-Auth-User header with a value of {}", token);
 
             List<String> mylist = new ArrayList<>();
