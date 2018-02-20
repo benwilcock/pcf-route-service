@@ -93,12 +93,14 @@ public class TestCatchAllController {
         ResponseEntity<byte[]> responseEntity = new ResponseEntity<byte[]>("my response body".getBytes(Charset.forName("UTF-8")), new HttpHeaders(), HttpStatus.OK);
         when(passthruService.exchange(any())).thenReturn(responseEntity);
 
+        String testXAuthTokenString = "3:10:YUMA";
+
         this.mockMvc
                 .perform(get("/")
                         .header("X-CF-Forwarded-Url","http://www.google.com")
                         .header("X-CF-Proxy-Metadata", "blah")
                         .header("X-CF-Proxy-Signature", "blah")
-                        .header(X_AUTH_TOKEN_HEADER_NAME, "3:10:YUMA"))
+                        .header(X_AUTH_TOKEN_HEADER_NAME, testXAuthTokenString))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -117,13 +119,9 @@ public class TestCatchAllController {
         assertThat(headers).containsKey("x-auth-user");
         assertThat(headers.get("x-auth-user")).isNotNull();
 
-        Map<String, Object> data = new HashMap<>();
-        data.put(XAuthUserTokenBuilder.AUTH_USER_LEVEL, "3");
-        data.put(XAuthUserTokenBuilder.EDO_KLID, "10");
-        data.put(XAuthUserTokenBuilder.EDO_USER_ID, "YUMA");
+        Map<String, Object> data = XAuthUserTokenBuilder.buildTokenDataMapFromString(testXAuthTokenString);
 
         String token = XAuthUserTokenBuilder.generateSignedToken(data);
-        assertThat(headers.get("x-auth-user")).isNotNull();
         assertThat(headers.getFirst("x-auth-user")).isEqualTo(token);
         JWTClaimsSet jwtClaimsSet = jwsParser.parse(token);
         assertThat(jwtClaimsSet.getClaim("authUserLevel")).isEqualTo(data.get(XAuthUserTokenBuilder.AUTH_USER_LEVEL));
