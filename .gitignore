@@ -16,4 +16,3 @@ build
 *.log
 
 src/main/resources/jwk-*
-src/test/resources/jwk-*
