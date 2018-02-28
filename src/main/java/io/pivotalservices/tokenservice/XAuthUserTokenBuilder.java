@@ -18,13 +18,15 @@ import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.ParseException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class XAuthUserTokenBuilder {
@@ -74,9 +76,9 @@ public class XAuthUserTokenBuilder {
     }
 
     private static JWTClaimsSet getClaimSet(Map<String, Object> data) {
-        Date expirationDate = (Date)data.get(EXPIRY_DATE);
+        Date expirationDate = (Date) data.get(EXPIRY_DATE);
 
-        if(null == expirationDate){
+        if (null == expirationDate) {
             expirationDate = Date.from(ZonedDateTime.now().plusSeconds(180).toInstant());
         }
 
@@ -85,29 +87,29 @@ public class XAuthUserTokenBuilder {
                 .expirationTime(expirationDate)
                 .claim("authUserId", "user-id")
                 .claim("authUserType", "CUSTOMER")
-                .claim("authUserLevel", (String)data.get(AUTH_USER_LEVEL))
+                .claim("authUserLevel", (String) data.get(AUTH_USER_LEVEL))
                 .claim("authTicket", "23fadf2309aoiijassegg")
                 .claim("siebelCustomerRelationId", "000000011111111")
                 .claim("siebelUserRelationId", "000000011111111")
-                .claim("edoKlid", (String)data.get(EDO_KLID))
+                .claim("edoKlid", (String) data.get(EDO_KLID))
                 .claim("edoAgreementId", "000001143")
-                .claim("edoUserId", (String)data.get(EDO_USER_ID))
+                .claim("edoUserId", (String) data.get(EDO_USER_ID))
                 .claim("sources", new String[]{"RASS", "TA"})
                 .build();
     }
 
     @SuppressWarnings("unchecked")
-    public static Map<String, Object> buildTokenDataMapFromString(String token){
+    public static Map<String, Object> buildTokenDataMapFromString(String token) {
         String[] bits = StringUtils.commaDelimitedListToStringArray("0,0,0");
-        if(!StringUtils.isEmpty(token)){
-            bits  = StringUtils.tokenizeToStringArray(token, ":");
+        if (!StringUtils.isEmpty(token)) {
+            bits = StringUtils.tokenizeToStringArray(token, ":");
         }
 
-        if(bits.length != 3){
+        if (bits.length != 3) {
             throw new IllegalArgumentException("The token was malformed.");
         }
 
-        Map<String,Object> data = new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         data.put(AUTH_USER_LEVEL, bits[0]);
         data.put(EDO_KLID, bits[1]);
         data.put(EDO_USER_ID, bits[2]);
